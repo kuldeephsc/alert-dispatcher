@@ -26,7 +26,24 @@ graph TD
     NS["Notification Service<br/>builds the Alert"]
     D["Dispatcher<br/>fans out, retries once,<br/>collects results"]
     Email["Email Channel<br/>Send(alert)"]
-   mermaid
+    Slack["Slack Channel<br/>Send(alert)"]
+    Webhook["Webhook Channel<br/>Send(alert)"]
+    
+    Client --> NS
+    NS --> D
+    D --> Email
+    D --> Slack
+    D --> Webhook
+    
+    classDef note fill:#f9f9f9,stroke:#999
+    class Email,Slack,Webhook note
+```
+
+### Low-Level Design (LLD)
+
+The detailed component architecture showing data flow and interface contracts:
+
+```mermaid
 graph TD
     Alert["Alert<br/>data contract, input"]
     D["Dispatcher<br/>fan-out + retry orchestration"]
@@ -58,23 +75,7 @@ graph TD
 - Each channel implementation is independent and can be added/modified without affecting the Dispatcher
 - New channels (e.g., SMSChannel) can be added by simply implementing the `Channel` interface
 - The retry logic is centralized in the Dispatcher for consistency
-- Every box in the bottom row implements Channel — Dispatcher's code never mentions any of them by name-out + retry) → Result (output)
-                      ↓
-                  [Channel Interface]
-                      ↓
-    ┌───────────────────┬───────────────────┬──────────────────┐
-    ↓                   ↓                   ↓                  ↓
-EmailChannel         SlackChannel      WebhookChannel    SMSChannel
-(SMTP)              (HTTP POST)        (HTTP POST)       (added later)
-```
-
-**Key Points:**
-- The Dispatcher depends on the `Channel` interface, never on concrete implementations
-- Each channel implementation is independent and can be added/modified without affecting the Dispatcher
-- New channels (e.g., SMSChannel) can be added by simply implementing the `Channel` interface
-- The retry logic is centralized in the Dispatcher for consistency
-
-![LLD Diagram](lld-diagram.png)
+- Every box in the bottom row implements Channel — Dispatcher's code never mentions any of them by name
 
 ## Project Structure
 
