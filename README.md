@@ -20,6 +20,66 @@ Client → Notification Service → Dispatcher → Channels (Email/Slack/Webhook
 
 Each channel implements the same two-method interface (`Send()` and `Name()`), allowing the Dispatcher to remain agnostic of specific channel implementations. This enables adding new channels without modifying the Dispatcher code.
 
+**HLD Flow Diagram:**
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant NotificationService
+    participant Dispatcher
+    participant Email
+    participant Slack
+    participant Webhook
+    
+    Client->>NotificationService: Notify(title, message)
+    NotificationService->>NotificationService: Create Alert{title, message}
+    NotificationService->>Dispatcher: Dispatch(alert)
+    
+    Dispatcher->>Email: Send(alert)
+    Email-->>Dispatcher: success/error
+    
+    Dispatcher->>Slack: Send(alert)
+    Slack-->>Dispatcher: success/error
+    
+    Dispatcher->>Webhook: Send(alert)
+    Webhook-->>Dispatcher: success/error
+**LLD Flow Diagram (Retry Logic):**
+
+```mermaid
+flowchart TD
+    Start["Alert Received"] --> Loop["For Each Channel"]
+    Loop --> Send1["ch.Send(alert)"]
+    Send1 --> Check1{Success?}
+    Check1 -->|Yes| Mark1["results[name] = Success"]
+    Check1 -->|No| Retry["Retry: ch.Send(alert)"]
+    Mark1 --> Next["Next Channel"]
+    Retry --> Check2{Success?}
+    Check2 -->|Yes| Mark2["results[name] = Success after retry"]
+    Check2 -->|No| Mark3["results[name] = Failed"]
+    Mark2 --> Next
+    Mark3 --> Next
+    Next --> MoreChannels{More Channels?}
+    MoreChannels -->|Yes| Loop
+    MoreChannels -->|No| Return["Return Results Map"]
+    Return --> End["End"]
+    
+    style Start fill:#e1f5e1
+    style End fill:#ffe1e1
+    style Send1 fill:#e3f2fd
+    style Retry fill:#fff3e0
+    style Mark1 fill:#c8e6c9
+    style Mark2 fill:#c8e6c9
+    style Mark3 fill:#ffcccc
+```
+
+**LLD Component Diagram:**
+    
+    Dispatcher-->>NotificationService: map[channel]status
+    NotificationService-->>Client: Print Results
+```
+
+**HLD Component Diagram:**
+
 ```mermaid
 graph TD
     Client["Client"]
