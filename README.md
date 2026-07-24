@@ -43,6 +43,36 @@ sequenceDiagram
     
     Dispatcher->>Webhook: Send(alert)
     Webhook-->>Dispatcher: success/error
+    
+    Dispatcher-->>NotificationService: map[channel]status
+    NotificationService-->>Client: Print Results
+```
+
+**HLD Component Diagram:**
+
+```mermaid
+graph TD
+    Client["Client"]
+    NS["Notification Service<br/>builds the Alert"]
+    D["Dispatcher<br/>fans out, retries once,<br/>collects results"]
+    Email["Email Channel<br/>Send(alert)"]
+    Slack["Slack Channel<br/>Send(alert)"]
+    Webhook["Webhook Channel<br/>Send(alert)"]
+    
+    Client --> NS
+    NS --> D
+    D --> Email
+    D --> Slack
+    D --> Webhook
+    
+    classDef note fill:#f9f9f9,stroke:#999
+    class Email,Slack,Webhook note
+```
+
+### Low-Level Design (LLD)
+
+The detailed component architecture showing data flow and interface contracts:
+
 **LLD Flow Diagram (Retry Logic):**
 
 ```mermaid
@@ -73,35 +103,6 @@ flowchart TD
 ```
 
 **LLD Component Diagram:**
-    
-    Dispatcher-->>NotificationService: map[channel]status
-    NotificationService-->>Client: Print Results
-```
-
-**HLD Component Diagram:**
-
-```mermaid
-graph TD
-    Client["Client"]
-    NS["Notification Service<br/>builds the Alert"]
-    D["Dispatcher<br/>fans out, retries once,<br/>collects results"]
-    Email["Email Channel<br/>Send(alert)"]
-    Slack["Slack Channel<br/>Send(alert)"]
-    Webhook["Webhook Channel<br/>Send(alert)"]
-    
-    Client --> NS
-    NS --> D
-    D --> Email
-    D --> Slack
-    D --> Webhook
-    
-    classDef note fill:#f9f9f9,stroke:#999
-    class Email,Slack,Webhook note
-```
-
-### Low-Level Design (LLD)
-
-The detailed component architecture showing data flow and interface contracts:
 
 ```mermaid
 graph TD
@@ -136,6 +137,7 @@ graph TD
 - New channels (e.g., SMSChannel) can be added by simply implementing the `Channel` interface
 - The retry logic is centralized in the Dispatcher for consistency
 - Every box in the bottom row implements Channel — Dispatcher's code never mentions any of them by name
+
 
 ## Project Structure
 
