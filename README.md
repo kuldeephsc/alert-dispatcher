@@ -167,24 +167,3 @@ dispatcher/
 4. **Channels** implement their specific send logic (SMTP for Email, HTTP POST for Slack/Webhook)
 5. **Retry Logic**: If a channel fails, the Dispatcher retries once before marking as failed
 6. **Results** are collected and returned as a map showing success/failure status for each channel
-
-## Extensibility
-
-To add a new channel:
-
-1. Create a new file in the `channel/` package (e.g., `sms.go`)
-2. Define a struct that implements the `Channel` interface:
-   ```go
-   type SMSChannel struct{}
-   
-   func (s *SMSChannel) Send(alert model.Alert) error {
-       // Implementation
-   }
-   
-   func (s *SMSChannel) Name() string {
-       return "SMS"
-   }
-   ```
-3. Register it in main: `d.Register(&channel.SMSChannel{})`
-
-The Dispatcher code remains unchanged - this is the power of interface-based design.
